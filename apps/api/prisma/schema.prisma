@@ -1,0 +1,303 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ToppingCategory {
+  MEAT
+  VEGGIE
+  CHEESE
+  SAUCE
+}
+
+enum UserRole {
+  CUSTOMER
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PREPARING
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+}
+
+enum CouponType {
+  PERCENT
+  FIXED
+}
+
+model Category {
+  id        String    @id @default(uuid())
+  name      String
+  slug      String    @unique
+  sortOrder Int       @default(0)
+  products  Product[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@map("categories")
+}
+
+model Product {
+  id                 String                  @id @default(uuid())
+  slug               String                  @unique
+  name               String
+  description        String
+  basePriceCents     Int
+  imageUrl           String
+  isBuildYourOwnBase Boolean                 @default(false)
+  available          Boolean                 @default(true)
+  ratingAverage      Float                   @default(0)
+  ratingCount        Int                     @default(0)
+  categoryId         String
+  category           Category                @relation(fields: [categoryId], references: [id])
+  defaultToppings    ProductToppingDefault[]
+  cartItems          CartItem[]
+  reviews            Review[]
+  createdAt          DateTime                @default(now())
+  updatedAt          DateTime                @updatedAt
+
+  @@index([categoryId])
+  @@map("products")
+}
+
+model Size {
+  id                 String     @id @default(uuid())
+  name               String     @unique
+  priceModifierCents Int        @default(0)
+  sortOrder          Int        @default(0)
+  cartItems          CartItem[]
+
+  @@map("sizes")
+}
+
+model Crust {
+  id                 String     @id @default(uuid())
+  name               String     @unique
+  priceModifierCents Int        @default(0)
+  sortOrder          Int        @default(0)
+  cartItems          CartItem[]
+
+  @@map("crusts")
+}
+
+model Topping {
+  id                 String                  @id @default(uuid())
+  name               String                  @unique
+  category           ToppingCategory
+  priceModifierCents Int                     @default(0)
+  available          Boolean                 @default(true)
+  defaultOnProducts  ProductToppingDefault[]
+  cartItemToppings   CartItemTopping[]
+
+  @@map("toppings")
+}
+
+/// Which toppings a pre-built pizza ships with by default, so the
+/// build-your-own flow can show "added"/"removed" diffs from a baseline.
+model ProductToppingDefault {
+  productId String
+  toppingId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  topping   Topping @relation(fields: [toppingId], references: [id], onDelete: Cascade)
+
+  @@id([productId, toppingId])
+  @@map("product_topping_defaults")
+}
+
+/// A guest cart, identified by a client-generated id sent via the
+/// `X-Cart-Id` header (no auth/cookies required — see cart module).
+model Cart {
+  id        String     @id
+  items     CartItem[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@map("carts")
+}
+
+model CartItem {
+  id             String            @id @default(uuid())
+  cartId         String
+  cart           Cart              @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  productId      String
+  product        Product           @relation(fields: [productId], references: [id])
+  sizeId         String
+  size           Size              @relation(fields: [sizeId], references: [id])
+  crustId        String
+  crust          Crust             @relation(fields: [crustId], references: [id])
+  toppings       CartItemTopping[]
+  quantity       Int               @default(1)
+  /// Snapshot of the computed unit price at the time this item was added/updated.
+  unitPriceCents Int
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@index([cartId])
+  @@map("cart_items")
+}
+
+model CartItemTopping {
+  cartItemId String
+  toppingId  String
+  cartItem   CartItem @relation(fields: [cartItemId], references: [id], onDelete: Cascade)
+  topping    Topping  @relation(fields: [toppingId], references: [id])
+
+  @@id([cartItemId, toppingId])
+  @@map("cart_item_toppings")
+}
+
+model User {
+  id            String         @id @default(uuid())
+  email         String         @unique
+  passwordHash  String
+  firstName     String
+  lastName      String
+  role          UserRole       @default(CUSTOMER)
+  addresses     Address[]
+  orders        Order[]
+  reviews       Review[]
+  refreshTokens RefreshToken[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@map("users")
+}
+
+/// Refresh tokens are stored hashed (never the raw token) so a DB leak
+/// doesn't hand out valid sessions; rotated on every use (old one revoked).
+model RefreshToken {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+model Address {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  label     String
+  street    String
+  city      String
+  state     String
+  zip       String
+  country   String
+  isDefault Boolean  @default(false)
+  orders    Order[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@map("addresses")
+}
+
+model Order {
+  id                  String               @id @default(uuid())
+  userId              String
+  user                User                 @relation(fields: [userId], references: [id])
+  addressId           String
+  address             Address              @relation(fields: [addressId], references: [id])
+  status              OrderStatus          @default(PENDING)
+  paymentStatus       PaymentStatus
+  subtotalCents       Int
+  discountCents       Int                  @default(0)
+  taxCents            Int
+  deliveryFeeCents    Int
+  totalCents          Int
+  couponCode          String?
+  paymentCardLast4    String
+  paymentCardBrand    String
+  items               OrderItem[]
+  statusHistory       OrderStatusHistory[]
+  estimatedDeliveryAt DateTime?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+
+  @@index([userId])
+  @@map("orders")
+}
+
+/// Denormalized snapshot of a cart item at purchase time — historical
+/// orders must not change if the catalog changes/prices update later.
+model OrderItem {
+  id             String   @id @default(uuid())
+  orderId        String
+  order          Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productName    String
+  sizeName       String
+  crustName      String
+  toppingNames   String[]
+  unitPriceCents Int
+  quantity       Int
+  lineTotalCents Int
+
+  @@map("order_items")
+}
+
+model OrderStatusHistory {
+  id        String      @id @default(uuid())
+  orderId   String
+  order     Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  status    OrderStatus
+  changedAt DateTime    @default(now())
+
+  @@map("order_status_history")
+}
+
+/// One review per user per product (upserted, not append-only) — keeps
+/// rating aggregation simple and gives users an obvious "edit review" flow.
+model Review {
+  id        String   @id @default(uuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rating    Int
+  comment   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([productId, userId])
+  @@index([productId])
+  @@map("reviews")
+}
+
+/// Coupons are looked up by code at checkout; the order stores the code
+/// and computed discount as a denormalized snapshot (no FK), same
+/// reasoning as OrderItem — a coupon's terms can change without altering
+/// past orders.
+model Coupon {
+  id                  String     @id @default(uuid())
+  code                String     @unique
+  type                CouponType
+  value               Int
+  minOrderAmountCents Int        @default(0)
+  maxUses             Int?
+  usesCount           Int        @default(0)
+  expiresAt           DateTime?
+  active              Boolean    @default(true)
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+
+  @@map("coupons")
+}

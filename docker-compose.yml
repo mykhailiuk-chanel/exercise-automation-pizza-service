@@ -1,0 +1,25 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: pizza
+      POSTGRES_PASSWORD: pizza
+      POSTGRES_DB: pizza
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pizza"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres-data:
+
+# Run `docker compose up` to start Postgres, then run the api/web apps
+# directly on the host with `pnpm dev` (they connect to this Postgres on
+# localhost:5432). Containerized api/web images (Dockerfile per app) are
+# added in the deploy phase, once there's real app code to build.
