@@ -11,6 +11,7 @@ import { OrdersModule } from './orders/orders.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { CouponsModule } from './coupons/coupons.module';
 import { AdminModule } from './admin/admin.module';
+import { CaptchaModule } from './captcha/captcha.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { AdminModule } from './admin/admin.module';
     ReviewsModule,
     CouponsModule,
     AdminModule,
+    CaptchaModule,
   ],
   controllers: [AppController],
   providers: [AppService],

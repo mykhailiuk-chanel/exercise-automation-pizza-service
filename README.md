@@ -26,6 +26,19 @@ pnpm dev                  # runs web + api in parallel via Turborepo
 - API: http://localhost:3053/api
 - Swagger docs: http://localhost:3053/api/docs
 
+Seed the database with `pnpm --filter @pizza/api db:seed` (catalog, coupons, and demo accounts below).
+
+## Demo accounts
+
+For manually testing without registering a fresh account each time:
+
+| Role     | Email                        | Password       |
+|----------|------------------------------|----------------|
+| Admin    | `admin@pizzapalace.test`     | `Admin123!`    |
+| Customer | `customer@pizzapalace.test`  | `Customer123!` |
+
+Log in at `/account/login`. The admin account can visit the [admin panel](./IMPLEMENTATION_PLAN.md#phase-5--admin-panel) at `/admin` (an "Admin" link also appears in the header nav once logged in); the customer account is a plain shopper for exercising menu browsing, cart, checkout, order history, and reviews.
+
 ## License
 
 MIT

@@ -197,10 +197,21 @@ export interface CardInput {
   name: string;
 }
 
+export interface CaptchaChallengeDto {
+  token: string;
+  question: string;
+}
+
+export interface CaptchaAnswerInput {
+  token: string;
+  answer: number;
+}
+
 export interface CheckoutInput {
   addressId: string;
   card: CardInput;
   couponCode?: string;
+  captcha: CaptchaAnswerInput;
 }
 
 export interface ReviewDto {

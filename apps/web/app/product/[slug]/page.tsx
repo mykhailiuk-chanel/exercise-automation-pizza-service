@@ -9,6 +9,7 @@ import {
 } from "@/lib/api-client";
 import { formatCents } from "@/lib/format";
 import { AddToCartForm } from "@/components/add-to-cart-form";
+import { ProductAccordion } from "@/components/product-accordion";
 import { ReviewsSection } from "@/components/reviews-section";
 
 export const dynamicParams = true;
@@ -152,6 +153,8 @@ export default async function ProductPage({
       {product.available && !product.isBuildYourOwnBase && (
         <AddToCartForm product={product} sizes={sizes} crusts={crusts} />
       )}
+
+      <ProductAccordion />
 
       <ReviewsSection slug={product.slug} />
     </main>

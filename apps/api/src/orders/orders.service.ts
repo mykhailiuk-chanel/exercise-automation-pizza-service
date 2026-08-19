@@ -9,6 +9,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CartService } from '../cart/cart.service';
 import { PaymentsService } from '../payments/payments.service';
 import { CouponsService } from '../coupons/coupons.service';
+import { CaptchaService } from '../captcha/captcha.service';
 import { CheckoutDto } from './dto/checkout.dto';
 import { OrderResponseDto } from './dto/order-response.dto';
 
@@ -42,6 +43,7 @@ export class OrdersService {
     private readonly cartService: CartService,
     private readonly paymentsService: PaymentsService,
     private readonly couponsService: CouponsService,
+    private readonly captchaService: CaptchaService,
   ) {}
 
   private toResponseDto(order: OrderWithRelations): OrderResponseDto {
@@ -130,6 +132,10 @@ export class OrdersService {
     const cart = await this.cartService.getCart(cartId);
     if (cart.items.length === 0) {
       throw new BadRequestException('Your cart is empty');
+    }
+
+    if (!this.captchaService.verify(dto.captcha.token, dto.captcha.answer)) {
+      throw new BadRequestException('Verification answer is incorrect');
     }
 
     const subtotalCents = cart.subtotalCents;

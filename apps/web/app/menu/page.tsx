@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { getCategories, getProducts } from "@/lib/api-client";
+import { MENU_PAGE_SIZE } from "@/lib/menu-config";
 import { CategoryNav } from "@/components/category-nav";
-import { ProductCard } from "@/components/product-card";
+import { MenuProductGrid } from "@/components/menu-product-grid";
 
 export const metadata: Metadata = {
   title: "Menu | Pizza Palace",
@@ -12,7 +13,7 @@ export const metadata: Metadata = {
 export default async function MenuPage() {
   const [categories, products] = await Promise.all([
     getCategories(),
-    getProducts({ pageSize: 50 }),
+    getProducts({ pageSize: MENU_PAGE_SIZE }),
   ]);
 
   return (
@@ -27,15 +28,11 @@ export default async function MenuPage() {
         <CategoryNav categories={categories} />
       </div>
 
-      <ul
-        data-testid="menu-product-grid"
-        qa-data="menu-product-grid"
-        className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3"
-      >
-        {products.items.map((product) => (
-          <ProductCard key={product.id} product={product} />
-        ))}
-      </ul>
+      <MenuProductGrid
+        key="all"
+        initialItems={products.items}
+        total={products.total}
+      />
     </main>
   );
 }

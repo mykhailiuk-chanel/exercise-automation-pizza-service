@@ -11,6 +11,7 @@ import { fetchAddresses } from "@/lib/addresses-client";
 import { fetchCart } from "@/lib/cart-client";
 import { checkout } from "@/lib/orders-client";
 import { previewCoupon } from "@/lib/coupons-client";
+import { getCaptchaChallenge } from "@/lib/captcha-client";
 import { formatCents } from "@/lib/format";
 
 export function CheckoutView() {
@@ -30,14 +31,27 @@ export function CheckoutView() {
   } | null>(null);
   const [couponMessage, setCouponMessage] = useState<string | null>(null);
   const [isCheckingCoupon, setIsCheckingCoupon] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState("");
+  const [captchaQuestion, setCaptchaQuestion] = useState("");
+  const [captchaAnswer, setCaptchaAnswer] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const loadCaptcha = () => {
+    getCaptchaChallenge().then((c) => {
+      setCaptchaToken(c.token);
+      setCaptchaQuestion(c.question);
+      setCaptchaAnswer("");
+    });
+  };
 
   useEffect(() => {
     if (!isAuthLoading && !user) {
       router.push("/account/login?redirect=/checkout");
     }
   }, [isAuthLoading, user, router]);
+
+  useEffect(loadCaptcha, []);
 
   useEffect(() => {
     if (!user) return;
@@ -74,10 +88,12 @@ export function CheckoutView() {
         addressId,
         card: { number: cardNumber, expiry, cvc, name: cardName },
         couponCode: appliedCoupon?.code,
+        captcha: { token: captchaToken, answer: Number(captchaAnswer) },
       });
       router.push(`/checkout/confirmation/${order.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Checkout failed");
+      loadCaptcha();
     } finally {
       setIsSubmitting(false);
     }
@@ -255,6 +271,38 @@ export function CheckoutView() {
           </div>
         </fieldset>
 
+        <fieldset>
+          <legend className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
+            Verification
+          </legend>
+          <p className="mt-2 text-xs text-zinc-500">
+            Answer the question below to prove you&apos;re not a bot (this is a
+            practice check, not real bot prevention — the answer is always
+            computable from the question text).
+          </p>
+          <div className="mt-2 flex items-end gap-3">
+            <label className="flex flex-1 flex-col gap-1 text-sm">
+              <span
+                data-testid="checkout-captcha-question"
+                qa-data="checkout-captcha-question"
+                className="font-medium text-zinc-500"
+              >
+                {captchaQuestion || "Loading…"}
+                <RequiredMark />
+              </span>
+              <input
+                required
+                type="number"
+                value={captchaAnswer}
+                onChange={(e) => setCaptchaAnswer(e.target.value)}
+                data-testid="checkout-captcha-answer"
+                qa-data="checkout-captcha-answer"
+                className="rounded border border-zinc-300 px-3 py-1.5 dark:border-zinc-700 dark:bg-black"
+              />
+            </label>
+          </div>
+        </fieldset>
+
         {error && (
           <p
             data-testid="checkout-error"
@@ -267,7 +315,7 @@ export function CheckoutView() {
 
         <button
           type="submit"
-          disabled={isSubmitting || !addressId}
+          disabled={isSubmitting || !addressId || !captchaToken}
           data-testid="checkout-place-order"
           qa-data="checkout-place-order"
           className="rounded-full bg-foreground px-6 py-3 text-sm font-medium text-background disabled:opacity-50"

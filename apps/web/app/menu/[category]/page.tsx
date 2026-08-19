@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getCategories, getProducts } from "@/lib/api-client";
+import { MENU_PAGE_SIZE } from "@/lib/menu-config";
 import { CategoryNav } from "@/components/category-nav";
-import { ProductCard } from "@/components/product-card";
+import { MenuProductGrid } from "@/components/menu-product-grid";
 
 export const dynamicParams = true;
 
@@ -37,7 +38,7 @@ export default async function MenuCategoryPage({
 }) {
   const { category: slug } = await params;
   const { categories, category } = await getCategoryOrNotFound(slug);
-  const products = await getProducts({ category: slug, pageSize: 50 });
+  const products = await getProducts({ category: slug, pageSize: MENU_PAGE_SIZE });
 
   return (
     <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-12">
@@ -47,20 +48,17 @@ export default async function MenuCategoryPage({
         <CategoryNav categories={categories} activeSlug={slug} />
       </div>
 
-      <ul
-        data-testid="menu-product-grid"
-        qa-data="menu-product-grid"
-        className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3"
-      >
-        {products.items.map((product) => (
-          <ProductCard key={product.id} product={product} />
-        ))}
-      </ul>
-
-      {products.items.length === 0 && (
+      {products.items.length === 0 ? (
         <p className="mt-8 text-zinc-600 dark:text-zinc-400">
           No products in this category yet.
         </p>
+      ) : (
+        <MenuProductGrid
+          key={slug}
+          initialItems={products.items}
+          total={products.total}
+          category={slug}
+        />
       )}
     </main>
   );
