@@ -16,7 +16,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: pnpm
 
       - name: Install dependencies
@@ -28,12 +28,9 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
-      # Build step disabled for now — even with this commented out, Install
-      # (the step above) already runs `pnpm install`, and pnpm itself refuses
-      # to execute under Node 20 (packageManager: "pnpm@11.22.0" requires
-      # Node >= 22 to even run) — so this alone is not expected to make CI
-      # pass. Real fix (bump node-version above to 22, or pin an
-      # older/compatible pnpm) deferred until after the Phase 8 deploy — see
-      # NEXT_STEPS.md / IMPLEMENTATION_PLAN.md.
+      # Build step still disabled — node-version above is now 22, which
+      # resolves the pnpm engine mismatch, but `apps/web`'s build fetches
+      # from a live API at build time (e.g. the build-your-own page), and no
+      # API/Postgres is running in this CI job. Re-enable once that's sorted.
       # - name: Build
       #   run: pnpm build
