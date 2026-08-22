@@ -2,9 +2,8 @@ import type { Metadata } from "next";
 import { TEST_CARD_NUMBERS } from "@pizza/shared-types";
 import { FeatureCard, type Feature } from "@/components/feature-card";
 
-// TODO: replace with the real repo URL once this project is pushed to GitHub
-// (see NEXT_STEPS.md / IMPLEMENTATION_PLAN.md — also referenced in the footer).
-const GITHUB_URL = "https://github.com/YOUR_USERNAME/pizza-palace";
+const GITHUB_URL =
+  "https://github.com/mykhailiuk-chanel/exercise-automation-pizza-service";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3053/api/v1";

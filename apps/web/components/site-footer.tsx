@@ -1,6 +1,5 @@
-// TODO: replace with the real repo URL once this project is pushed to GitHub
-// (see NEXT_STEPS.md / IMPLEMENTATION_PLAN.md — also referenced on /for-testers).
-const GITHUB_URL = "https://github.com/YOUR_USERNAME/pizza-palace";
+const GITHUB_URL =
+  "https://github.com/mykhailiuk-chanel/exercise-automation-pizza-service";
 
 export function SiteFooter() {
   return (
