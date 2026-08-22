@@ -67,7 +67,7 @@ Log in at `/account/login`. The admin account can visit the admin panel at `/adm
 
 ## Source code
 
-> **TODO**: `https://github.com/YOUR_USERNAME/pizza-palace` is a placeholder — replace it (here, in the site footer, and on `/for-testers`) with the real repo URL once this project is pushed to GitHub.
+[github.com/mykhailiuk-chanel/exercise-automation-pizza-service](https://github.com/mykhailiuk-chanel/exercise-automation-pizza-service)
 
 ## License
 
