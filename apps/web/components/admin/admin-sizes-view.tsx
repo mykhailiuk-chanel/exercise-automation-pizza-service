@@ -193,6 +193,8 @@ export function AdminSizesView() {
             <button
               type="button"
               onClick={cancelEdit}
+              data-testid="admin-size-form-cancel"
+              qa-data="admin-size-form-cancel"
               className="self-start text-sm font-medium underline underline-offset-4"
             >
               Cancel

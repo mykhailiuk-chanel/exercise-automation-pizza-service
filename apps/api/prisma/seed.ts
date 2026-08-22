@@ -1,8 +1,6 @@
 import { PrismaClient, ToppingCategory } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 
-const prisma = new PrismaClient();
-
 // Matches AuthService's BCRYPT_ROUNDS (apps/api/src/auth/auth.service.ts) so
 // this hash is interchangeable with one produced by a real registration.
 const BCRYPT_ROUNDS = 10;
@@ -11,7 +9,43 @@ const DEMO_ADMIN_PASSWORD = 'Admin123!';
 const DEMO_CUSTOMER_EMAIL = 'customer@pizzapalace.test';
 const DEMO_CUSTOMER_PASSWORD = 'Customer123!';
 
-async function main() {
+export async function seedDemoUsers(prisma: PrismaClient): Promise<void> {
+  const adminPasswordHash = await bcrypt.hash(DEMO_ADMIN_PASSWORD, BCRYPT_ROUNDS);
+  await prisma.user.upsert({
+    where: { email: DEMO_ADMIN_EMAIL },
+    update: { role: 'ADMIN', passwordHash: adminPasswordHash },
+    create: {
+      email: DEMO_ADMIN_EMAIL,
+      passwordHash: adminPasswordHash,
+      firstName: 'Demo',
+      lastName: 'Admin',
+      role: 'ADMIN',
+    },
+  });
+
+  const customerPasswordHash = await bcrypt.hash(
+    DEMO_CUSTOMER_PASSWORD,
+    BCRYPT_ROUNDS,
+  );
+  await prisma.user.upsert({
+    where: { email: DEMO_CUSTOMER_EMAIL },
+    update: { role: 'CUSTOMER', passwordHash: customerPasswordHash },
+    create: {
+      email: DEMO_CUSTOMER_EMAIL,
+      passwordHash: customerPasswordHash,
+      firstName: 'Demo',
+      lastName: 'Customer',
+      role: 'CUSTOMER',
+    },
+  });
+
+  console.log(`Demo admin account: ${DEMO_ADMIN_EMAIL} / ${DEMO_ADMIN_PASSWORD}`);
+  console.log(
+    `Demo customer account: ${DEMO_CUSTOMER_EMAIL} / ${DEMO_CUSTOMER_PASSWORD}`,
+  );
+}
+
+export async function seedDatabase(prisma: PrismaClient): Promise<void> {
   await prisma.cartItem.deleteMany();
   await prisma.productToppingDefault.deleteMany();
   await prisma.product.deleteMany();
@@ -310,52 +344,23 @@ async function main() {
     ].map((c) => prisma.coupon.create({ data: c })),
   );
 
-  const adminPasswordHash = await bcrypt.hash(
-    DEMO_ADMIN_PASSWORD,
-    BCRYPT_ROUNDS,
-  );
-  await prisma.user.upsert({
-    where: { email: DEMO_ADMIN_EMAIL },
-    update: { role: 'ADMIN', passwordHash: adminPasswordHash },
-    create: {
-      email: DEMO_ADMIN_EMAIL,
-      passwordHash: adminPasswordHash,
-      firstName: 'Demo',
-      lastName: 'Admin',
-      role: 'ADMIN',
-    },
-  });
-
-  const customerPasswordHash = await bcrypt.hash(
-    DEMO_CUSTOMER_PASSWORD,
-    BCRYPT_ROUNDS,
-  );
-  await prisma.user.upsert({
-    where: { email: DEMO_CUSTOMER_EMAIL },
-    update: { role: 'CUSTOMER', passwordHash: customerPasswordHash },
-    create: {
-      email: DEMO_CUSTOMER_EMAIL,
-      passwordHash: customerPasswordHash,
-      firstName: 'Demo',
-      lastName: 'Customer',
-      role: 'CUSTOMER',
-    },
-  });
+  await seedDemoUsers(prisma);
 
   console.log(
     `Seeded ${categories.length} categories, ${toppings.length} toppings, ${products.length} products, and ${coupons.length} coupons.`,
   );
-  console.log(`Demo admin account: ${DEMO_ADMIN_EMAIL} / ${DEMO_ADMIN_PASSWORD}`);
-  console.log(
-    `Demo customer account: ${DEMO_CUSTOMER_EMAIL} / ${DEMO_CUSTOMER_PASSWORD}`,
-  );
 }
 
-main()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  })
-  .finally(async () => {
+async function main() {
+  const prisma = new PrismaClient();
+  try {
+    await seedDatabase(prisma);
+  } finally {
     await prisma.$disconnect();
-  });
+  }
+}
+
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

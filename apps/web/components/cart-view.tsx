@@ -61,6 +61,8 @@ export function CartView() {
         <p className="text-zinc-600 dark:text-zinc-400">Your cart is empty.</p>
         <Link
           href="/menu"
+          data-testid="cart-empty-browse-menu-link"
+          qa-data="cart-empty-browse-menu-link"
           className="mt-4 inline-block text-sm font-medium underline underline-offset-4"
         >
           Browse the menu

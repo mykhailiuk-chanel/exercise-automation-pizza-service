@@ -236,6 +236,8 @@ export function AdminToppingsView() {
             <button
               type="button"
               onClick={cancelEdit}
+              data-testid="admin-topping-form-cancel"
+              qa-data="admin-topping-form-cancel"
               className="self-start text-sm font-medium underline underline-offset-4"
             >
               Cancel

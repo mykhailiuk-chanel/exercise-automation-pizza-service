@@ -131,6 +131,8 @@ export function RegisterForm() {
         Already have an account?{" "}
         <Link
           href="/account/login"
+          data-testid="register-login-link"
+          qa-data="register-login-link"
           className="font-medium underline underline-offset-4"
         >
           Log in

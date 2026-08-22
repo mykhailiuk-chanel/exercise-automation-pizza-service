@@ -197,6 +197,8 @@ export function AdminCrustsView() {
             <button
               type="button"
               onClick={cancelEdit}
+              data-testid="admin-crust-form-cancel"
+              qa-data="admin-crust-form-cancel"
               className="self-start text-sm font-medium underline underline-offset-4"
             >
               Cancel

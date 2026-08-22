@@ -1,0 +1,16 @@
+name: Nightly Test Data Reset
+
+# schedule trigger intentionally omitted until the API is actually deployed
+# (Phase 8) and API_BASE_URL/TEST_RESET_SECRET repo secrets exist — see
+# NEXT_STEPS.md. Add `schedule: - cron: '0 3 * * *'` at that point.
+on:
+  workflow_dispatch: {}
+
+jobs:
+  reset:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Reset test database
+        run: |
+          curl -f -X POST "${{ secrets.API_BASE_URL }}/api/test/reset" \
+            -H "X-Test-Reset-Secret: ${{ secrets.TEST_RESET_SECRET }}"

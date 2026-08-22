@@ -124,6 +124,8 @@ export function PizzaBuilder({
                   value={s.id}
                   checked={s.id === sizeId}
                   onChange={() => setSizeId(s.id)}
+                  data-testid="pizza-builder-size-radio"
+                  qa-data="pizza-builder-size-radio"
                   className="sr-only"
                 />
                 {s.name}
@@ -158,6 +160,8 @@ export function PizzaBuilder({
                   value={c.id}
                   checked={c.id === crustId}
                   onChange={() => setCrustId(c.id)}
+                  data-testid="pizza-builder-crust-radio"
+                  qa-data="pizza-builder-crust-radio"
                   className="sr-only"
                 />
                 {c.name}

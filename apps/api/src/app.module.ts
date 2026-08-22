@@ -12,6 +12,12 @@ import { ReviewsModule } from './reviews/reviews.module';
 import { CouponsModule } from './coupons/coupons.module';
 import { AdminModule } from './admin/admin.module';
 import { CaptchaModule } from './captcha/captcha.module';
+import { TestUtilsModule } from './test-utils/test-utils.module';
+
+// Only registered when explicitly enabled — when disabled, /api/test/* 404s
+// outright rather than existing behind an auth check.
+const testUtilsImports =
+  process.env.ENABLE_TEST_UTILS === 'true' ? [TestUtilsModule] : [];
 
 @Module({
   imports: [
@@ -26,6 +32,7 @@ import { CaptchaModule } from './captcha/captcha.module';
     CouponsModule,
     AdminModule,
     CaptchaModule,
+    ...testUtilsImports,
   ],
   controllers: [AppController],
   providers: [AppService],

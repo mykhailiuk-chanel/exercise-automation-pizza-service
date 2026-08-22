@@ -342,6 +342,8 @@ export function AdminProductsView() {
             <button
               type="button"
               onClick={cancelEdit}
+              data-testid="admin-product-form-cancel"
+              qa-data="admin-product-form-cancel"
               className="self-start text-sm font-medium underline underline-offset-4"
             >
               Cancel

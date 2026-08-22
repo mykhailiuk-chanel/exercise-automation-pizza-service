@@ -30,6 +30,14 @@ export function SiteHeader() {
         </Link>
         <nav aria-label="Primary" className="flex items-center gap-6">
           <Link
+            href="/for-testers"
+            data-testid="site-header-for-testers-link"
+            qa-data="site-header-for-testers-link"
+            className="text-sm font-medium underline-offset-4 hover:underline"
+          >
+            For Testers
+          </Link>
+          <Link
             href="/menu"
             data-testid="site-header-menu-link"
             qa-data="site-header-menu-link"

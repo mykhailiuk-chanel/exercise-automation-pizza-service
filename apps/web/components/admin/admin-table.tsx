@@ -27,7 +27,12 @@ export function AdminTable<T extends { id: string }>({
         <thead>
           <tr className="border-b border-zinc-200 dark:border-zinc-800">
             {columns.map((col) => (
-              <th key={col.key} className="py-2 pr-4">
+              <th
+                key={col.key}
+                data-testid={`${testId}-header-${col.key}`}
+                qa-data={`${testId}-header-${col.key}`}
+                className="py-2 pr-4"
+              >
                 {col.header}
               </th>
             ))}
