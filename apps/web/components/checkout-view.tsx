@@ -313,6 +313,15 @@ export function CheckoutView() {
           </p>
         )}
 
+        <p
+          data-testid="checkout-disclaimer"
+          qa-data="checkout-disclaimer"
+          className="text-xs text-zinc-500"
+        >
+          Demo checkout — no real payment will be processed, no real order
+          will be placed.
+        </p>
+
         <button
           type="submit"
           disabled={isSubmitting || !addressId || !captchaToken}
