@@ -30,8 +30,8 @@ export function PizzaBuilder({
   toppings: ToppingDto[];
 }) {
   const { showToast } = useToast();
-  const [sizeId, setSizeId] = useState(sizes[0]?.id ?? "");
-  const [crustId, setCrustId] = useState(crusts[0]?.id ?? "");
+  const [sizeId, setSizeId] = useState("");
+  const [crustId, setCrustId] = useState("");
   const [selectedToppingIds, setSelectedToppingIds] = useState<string[]>(
     product.defaultToppingIds,
   );
@@ -67,7 +67,13 @@ export function PizzaBuilder({
     setSelectedToppingIds((prev) => prev.filter((id) => id !== toppingId));
   }
 
+  const missingRequiredOptions = !sizeId || !crustId;
+
   async function handleAddToCart() {
+    if (missingRequiredOptions) {
+      showToast("Please select a size and crust before adding to cart.");
+      return;
+    }
     setIsSubmitting(true);
     try {
       await addCartItem({
@@ -100,7 +106,7 @@ export function PizzaBuilder({
       <div>
         <fieldset>
           <legend className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
-            Size
+            Size *
           </legend>
           <div
             data-testid="pizza-builder-size-options"
@@ -136,7 +142,7 @@ export function PizzaBuilder({
 
         <fieldset className="mt-6">
           <legend className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
-            Crust
+            Crust *
           </legend>
           <div
             data-testid="pizza-builder-crust-options"
@@ -304,13 +310,22 @@ export function PizzaBuilder({
         <button
           type="button"
           onClick={handleAddToCart}
-          disabled={isSubmitting || !sizeId || !crustId}
+          disabled={isSubmitting || missingRequiredOptions}
           data-testid="pizza-builder-add-to-cart"
           qa-data="pizza-builder-add-to-cart"
           className="mt-4 w-full rounded-full bg-foreground px-6 py-3 text-sm font-medium text-background disabled:opacity-50"
         >
           {isSubmitting ? "Adding…" : "Add to Cart"}
         </button>
+        {missingRequiredOptions && (
+          <p
+            data-testid="pizza-builder-required-hint"
+            qa-data="pizza-builder-required-hint"
+            className="mt-2 text-sm text-red-600"
+          >
+            Please select a size and crust to continue.
+          </p>
+        )}
       </div>
     </div>
   );

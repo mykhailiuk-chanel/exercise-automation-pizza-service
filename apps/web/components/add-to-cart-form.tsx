@@ -15,12 +15,18 @@ export function AddToCartForm({
   crusts: CrustDto[];
 }) {
   const { showToast } = useToast();
-  const [sizeId, setSizeId] = useState(sizes[0]?.id ?? "");
-  const [crustId, setCrustId] = useState(crusts[0]?.id ?? "");
+  const [sizeId, setSizeId] = useState("");
+  const [crustId, setCrustId] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const missingRequiredOptions = !sizeId || !crustId;
+
   async function handleAddToCart() {
+    if (missingRequiredOptions) {
+      showToast("Please select a size and crust before adding to cart.");
+      return;
+    }
     setIsSubmitting(true);
     try {
       await addCartItem({
@@ -46,14 +52,18 @@ export function AddToCartForm({
     >
       <div className="flex flex-wrap gap-6">
         <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium text-zinc-500">Size</span>
+          <span className="font-medium text-zinc-500">Size *</span>
           <select
             value={sizeId}
             onChange={(e) => setSizeId(e.target.value)}
             data-testid="add-to-cart-size-select"
             qa-data="add-to-cart-size-select"
+            required
             className="rounded border border-zinc-300 px-3 py-1.5 dark:border-zinc-700 dark:bg-black"
           >
+            <option value="" disabled>
+              Select a size
+            </option>
             {sizes.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.name}
@@ -63,14 +73,18 @@ export function AddToCartForm({
         </label>
 
         <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium text-zinc-500">Crust</span>
+          <span className="font-medium text-zinc-500">Crust *</span>
           <select
             value={crustId}
             onChange={(e) => setCrustId(e.target.value)}
             data-testid="add-to-cart-crust-select"
             qa-data="add-to-cart-crust-select"
+            required
             className="rounded border border-zinc-300 px-3 py-1.5 dark:border-zinc-700 dark:bg-black"
           >
+            <option value="" disabled>
+              Select a crust
+            </option>
             {crusts.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
@@ -116,13 +130,22 @@ export function AddToCartForm({
       <button
         type="button"
         onClick={handleAddToCart}
-        disabled={isSubmitting || !sizeId || !crustId}
+        disabled={isSubmitting || missingRequiredOptions}
         data-testid="add-to-cart-submit"
         qa-data="add-to-cart-submit"
         className="mt-4 rounded-full bg-foreground px-6 py-3 text-sm font-medium text-background disabled:opacity-50"
       >
         {isSubmitting ? "Adding…" : "Add to Cart"}
       </button>
+      {missingRequiredOptions && (
+        <p
+          data-testid="add-to-cart-required-hint"
+          qa-data="add-to-cart-required-hint"
+          className="mt-2 text-sm text-red-600"
+        >
+          Please select a size and crust to continue.
+        </p>
+      )}
     </div>
   );
 }
