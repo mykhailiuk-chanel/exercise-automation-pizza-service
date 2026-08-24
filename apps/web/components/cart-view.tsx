@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import type { CartDto } from "@pizza/shared-types";
 import { formatCents } from "@/lib/format";
 import {
@@ -10,25 +10,44 @@ import {
   updateCartItemQuantity,
 } from "@/lib/cart-client";
 
+const RETRY_INTERVAL_MS = 15_000;
+const MAX_ATTEMPTS = 8;
+
 export function CartView() {
   const [cart, setCart] = useState<CartDto | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  const load = useCallback(async () => {
-    try {
-      setCart(await fetchCart());
-      setError(null);
-    } catch {
-      setError("Couldn't load your cart — please refresh the page.");
-    }
-  }, []);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
-    // Fetching on mount is the intended use here, not derived-state-from-props
-    // the rule is meant to catch — see https://react.dev/learn/you-might-not-need-an-effect
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void load();
-  }, [load]);
+    let cancelled = false;
+    let retryTimeout: ReturnType<typeof setTimeout>;
+
+    async function attemptLoad(attemptNumber: number) {
+      setAttempt(attemptNumber);
+      try {
+        const data = await fetchCart();
+        if (cancelled) return;
+        setCart(data);
+        setError(null);
+      } catch {
+        if (cancelled) return;
+        if (attemptNumber >= MAX_ATTEMPTS) {
+          setError("Couldn't load your cart — please refresh the page.");
+          return;
+        }
+        retryTimeout = setTimeout(
+          () => void attemptLoad(attemptNumber + 1),
+          RETRY_INTERVAL_MS,
+        );
+      }
+    }
+
+    void attemptLoad(1);
+    return () => {
+      cancelled = true;
+      clearTimeout(retryTimeout);
+    };
+  }, []);
 
   async function handleQuantityChange(itemId: string, quantity: number) {
     if (quantity < 1) return;
@@ -45,13 +64,27 @@ export function CartView() {
 
   if (!cart) {
     return (
-      <p
+      <div
         data-testid="cart-loading"
         qa-data="cart-loading"
-        className="mt-8 text-zinc-600 dark:text-zinc-400"
+        className="mt-8 flex flex-col items-center gap-3 text-center text-zinc-600 dark:text-zinc-400"
       >
-        Loading your cart…
-      </p>
+        <div
+          aria-hidden="true"
+          className="h-8 w-8 animate-spin rounded-full border-2 border-zinc-300 border-t-foreground dark:border-zinc-700"
+        />
+        <p>Loading your cart…</p>
+        {attempt > 1 && (
+          <p
+            data-testid="cart-loading-slow-hint"
+            qa-data="cart-loading-slow-hint"
+            className="max-w-xs text-xs text-zinc-500"
+          >
+            Still waking up the server — this can take up to a minute on the
+            first request.
+          </p>
+        )}
+      </div>
     );
   }
 

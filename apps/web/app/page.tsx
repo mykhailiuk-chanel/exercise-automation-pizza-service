@@ -1,8 +1,10 @@
 import Link from "next/link";
+import { ApiWarmup } from "@/components/api-warmup";
 
 export default function Home() {
   return (
     <main className="flex flex-1 flex-col items-center justify-center px-6 py-24 text-center">
+      <ApiWarmup />
       <h1 className="text-4xl font-bold tracking-tight">
         A pizza shop for practicing test automation
       </h1>
