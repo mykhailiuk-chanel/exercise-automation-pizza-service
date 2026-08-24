@@ -11,16 +11,29 @@ import {
 } from "@/lib/cart-client";
 
 const RETRY_INTERVAL_MS = 15_000;
-const MAX_ATTEMPTS = 8;
+const HARD_RELOAD_AFTER_MS = 2 * 60_000;
+const GIVE_UP_AFTER_MS = 3 * 60_000;
+const STARTED_AT_KEY = "cart_load_started_at";
+const HAS_HARD_RELOADED_KEY = "cart_load_hard_reloaded";
+
+function clearCartLoadRecoveryState() {
+  window.sessionStorage.removeItem(STARTED_AT_KEY);
+  window.sessionStorage.removeItem(HAS_HARD_RELOADED_KEY);
+}
 
 export function CartView() {
   const [cart, setCart] = useState<CartDto | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
+  const [retryToken, setRetryToken] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
     let retryTimeout: ReturnType<typeof setTimeout>;
+
+    const storedStartedAt = window.sessionStorage.getItem(STARTED_AT_KEY);
+    const startedAt = storedStartedAt ? Number(storedStartedAt) : Date.now();
+    window.sessionStorage.setItem(STARTED_AT_KEY, String(startedAt));
 
     async function attemptLoad(attemptNumber: number) {
       setAttempt(attemptNumber);
@@ -29,12 +42,24 @@ export function CartView() {
         if (cancelled) return;
         setCart(data);
         setError(null);
+        clearCartLoadRecoveryState();
       } catch {
         if (cancelled) return;
-        if (attemptNumber >= MAX_ATTEMPTS) {
+        const elapsed = Date.now() - startedAt;
+
+        if (elapsed >= GIVE_UP_AFTER_MS) {
           setError("Couldn't load your cart — please refresh the page.");
           return;
         }
+
+        const alreadyHardReloaded =
+          window.sessionStorage.getItem(HAS_HARD_RELOADED_KEY) === "1";
+        if (elapsed >= HARD_RELOAD_AFTER_MS && !alreadyHardReloaded) {
+          window.sessionStorage.setItem(HAS_HARD_RELOADED_KEY, "1");
+          window.location.reload();
+          return;
+        }
+
         retryTimeout = setTimeout(
           () => void attemptLoad(attemptNumber + 1),
           RETRY_INTERVAL_MS,
@@ -47,7 +72,14 @@ export function CartView() {
       cancelled = true;
       clearTimeout(retryTimeout);
     };
-  }, []);
+  }, [retryToken]);
+
+  function handleTryAgain() {
+    clearCartLoadRecoveryState();
+    setError(null);
+    setAttempt(0);
+    setRetryToken((t) => t + 1);
+  }
 
   async function handleQuantityChange(itemId: string, quantity: number) {
     if (quantity < 1) return;
@@ -59,7 +91,20 @@ export function CartView() {
   }
 
   if (error) {
-    return <p className="mt-8 text-sm text-red-600">{error}</p>;
+    return (
+      <div className="mt-8 flex flex-col items-center gap-3 text-center">
+        <p className="text-sm text-red-600">{error}</p>
+        <button
+          type="button"
+          onClick={handleTryAgain}
+          data-testid="cart-loading-try-again"
+          qa-data="cart-loading-try-again"
+          className="text-sm font-medium underline underline-offset-4"
+        >
+          Try again
+        </button>
+      </div>
+    );
   }
 
   if (!cart) {
@@ -80,7 +125,7 @@ export function CartView() {
             qa-data="cart-loading-slow-hint"
             className="max-w-xs text-xs text-zinc-500"
           >
-            Still waking up the server — this can take up to a minute on the
+            Still waking up the server — this can take a few minutes on the
             first request.
           </p>
         )}
