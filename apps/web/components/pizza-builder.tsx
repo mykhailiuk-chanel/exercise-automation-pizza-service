@@ -18,6 +18,8 @@ const TOPPING_CATEGORY_LABELS: Record<ToppingDto["category"], string> = {
   sauce: "Sauce",
 };
 
+const MAX_TOPPINGS = 5;
+
 export function PizzaBuilder({
   product,
   sizes,
@@ -57,10 +59,13 @@ export function PizzaBuilder({
     selectedToppings.reduce((sum, t) => sum + t.priceModifierCents, 0);
   const totalCents = unitPriceCents * quantity;
 
+  const toppingLimitReached = selectedToppingIds.length >= MAX_TOPPINGS;
+
   function addTopping(toppingId: string) {
-    setSelectedToppingIds((prev) =>
-      prev.includes(toppingId) ? prev : [...prev, toppingId],
-    );
+    setSelectedToppingIds((prev) => {
+      if (prev.includes(toppingId) || prev.length >= MAX_TOPPINGS) return prev;
+      return [...prev, toppingId];
+    });
   }
 
   function removeTopping(toppingId: string) {
@@ -180,6 +185,16 @@ export function PizzaBuilder({
           <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
             Toppings — drag onto the pizza, or use the + button
           </h2>
+          <p
+            data-testid="pizza-builder-topping-count"
+            qa-data="pizza-builder-topping-count"
+            className={`mt-1 text-sm ${toppingLimitReached ? "text-red-600" : "text-zinc-500"}`}
+          >
+            {selectedToppingIds.length}/{MAX_TOPPINGS} toppings selected
+            {toppingLimitReached
+              ? " — remove one to add another"
+              : ""}
+          </p>
           {[...toppingsByCategory.entries()].map(([category, items]) => (
             <div key={category} className="mt-3">
               <h3 className="text-xs font-medium text-zinc-500">
@@ -194,7 +209,8 @@ export function PizzaBuilder({
                   <li key={topping.id}>
                     <button
                       type="button"
-                      draggable
+                      draggable={!toppingLimitReached}
+                      disabled={toppingLimitReached}
                       onDragStart={(e) => {
                         e.dataTransfer.setData("text/plain", topping.id);
                         e.dataTransfer.effectAllowed = "copy";
@@ -203,7 +219,7 @@ export function PizzaBuilder({
                       data-testid="pizza-builder-tray-topping"
                       qa-data="pizza-builder-tray-topping"
                       data-topping-id={topping.id}
-                      className="cursor-grab rounded-full border border-zinc-300 px-3 py-1 text-sm active:cursor-grabbing dark:border-zinc-700"
+                      className="cursor-grab rounded-full border border-zinc-300 px-3 py-1 text-sm active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700"
                     >
                       + {topping.name}
                     </button>
@@ -228,7 +244,12 @@ export function PizzaBuilder({
             e.preventDefault();
             setDragOver(false);
             const toppingId = e.dataTransfer.getData("text/plain");
-            if (toppingId) addTopping(toppingId);
+            if (!toppingId) return;
+            if (toppingLimitReached) {
+              showToast(`You can only add up to ${MAX_TOPPINGS} toppings.`);
+              return;
+            }
+            addTopping(toppingId);
           }}
           className={`flex min-h-64 flex-col items-center justify-center rounded-full border-4 border-dashed p-8 text-center transition-colors ${
             dragOver
