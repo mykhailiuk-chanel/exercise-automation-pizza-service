@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
   ArrayUnique,
   IsArray,
   IsInt,
@@ -9,6 +10,8 @@ import {
   Min,
 } from 'class-validator';
 import type { AddCartItemInput } from '@pizza/shared-types';
+
+const MAX_TOPPINGS = 5;
 
 export class AddCartItemDto implements AddCartItemInput {
   @ApiProperty({
@@ -26,10 +29,15 @@ export class AddCartItemDto implements AddCartItemInput {
   @IsUUID()
   crustId: string;
 
-  @ApiPropertyOptional({ type: [String], default: [] })
+  @ApiPropertyOptional({
+    type: [String],
+    default: [],
+    maxItems: MAX_TOPPINGS,
+  })
   @IsOptional()
   @IsArray()
   @ArrayUnique()
+  @ArrayMaxSize(MAX_TOPPINGS)
   @IsUUID('4', { each: true })
   toppingIds: string[] = [];
 
