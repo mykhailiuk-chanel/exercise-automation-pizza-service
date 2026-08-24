@@ -8,6 +8,17 @@ It's a fake shop, not a real one — no real orders, no real payments, no real p
 | :-----------------------------------------------------------------------------: | :---------------------------------------------------------------------------: |
 | ![Menu page](./docs/screenshots/menu.jpg)                                      | ![For Testers page](./docs/screenshots/for-testers.jpg)                     |
 
+## Live demo
+
+**[exercise-automation-pizza-service-w-chi.vercel.app](https://exercise-automation-pizza-service-w-chi.vercel.app)**
+
+If you want to test this resource — welcome! Practice UI or API automation against it freely; nothing here is real, so there's nothing to break.
+
+- Swagger docs: https://pizza-palace-api-m7o4.onrender.com/api/docs
+- Health check: https://pizza-palace-api-m7o4.onrender.com/api/v1/health
+
+The API runs on Render's free tier, so it may take up to ~50s to respond after a period of inactivity — that's expected, just retry.
+
 ## Stack
 
 - **apps/web** — Next.js (App Router) frontend
